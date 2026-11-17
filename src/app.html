@@ -181,14 +181,32 @@ const EXERCISES={
   hyper:{n:'Rückenstrecker (Hyperextension)',inc:0,bw:true},
   abduktor:{n:'Abduktoren-Maschine',inc:2.5,lower:true},
   seitstuetz:{n:'Seitstütz (je Seite)',inc:0,time:true},
+  butterfly:{n:'Butterfly (Maschine)',inc:2.5},
+  ueberkopf:{n:'Trizeps über Kopf (Kabel)',inc:2.5},
+  kabelcrunch:{n:'Bauch: Crunches am Kabel',inc:2.5},
+  khrudern:{n:'Kurzhantelrudern einarmig',inc:2,per:'pro Hand'},
+  hammer:{n:'Hammer-Curls (Kurzhanteln)',inc:1,per:'pro Hand'},
+  beinheben:{n:'Bauch: Knieheben hängend',inc:0,bw:true},
+  seitheben:{n:'Seitheben (Kurzhanteln)',inc:1,per:'pro Hand'},
+  crunchmasch:{n:'Bauch: Crunch-Maschine',inc:2.5},
+  bankliege:{n:'Liegestütz an der Bank (erhöht)',inc:0,bw:true},
+  beinhebenl:{n:'Bauch: Beinheben liegend',inc:0,bw:true},
+  kabelcurl:{n:'Bizeps-Curls am Kabel',inc:2.5},
+  plankb:{n:'Bauch: Unterarmstütz (Plank)',inc:0,time:true},
 };
 const PLANS={
   A:{name:'Ganzkörper A',ex:['beinpresse','bank','rudern','schulter','beinbeuger','plank'],cardio:'15 min locker auf Velo oder Crosstrainer (Puls ca. 120–140, du kannst noch reden)'},
   B:{name:'Ganzkörper B',ex:['rdl','latzug','schraeg','ausfall','curl','trizeps'],cardio:'10 min Intervalle auf dem Rudergerät: 30 s zügig, 60 s locker'},
   EA:{name:'Einsteiger A',ex:['beinpresse','brustpresse','rudern','hipthrust','beinbeuger','plank'],cardio:'20 min zügig gehen auf dem Laufband mit Steigung (5–8 %), Puls ca. 120–140'},
   EB:{name:'Einsteiger B',ex:['goblet','latzug','schultermasch','hyper','abduktor','seitstuetz'],cardio:'15–20 min Crosstrainer oder Velo, gleichmässig, du kannst noch reden'},
+  BT:{name:'Brust & Trizeps',ex:['bank','schraeg','butterfly','trizeps','ueberkopf','kabelcrunch'],cardio:'15 min locker auf Velo oder Crosstrainer (Puls ca. 120–140, du kannst noch reden)'},
+  RB:{name:'Rücken & Bizeps',ex:['latzug','rudern','khrudern','curl','hammer','beinheben'],cardio:'10 min Intervalle auf dem Rudergerät: 30 s zügig, 60 s locker'},
+  BS:{name:'Beine & Schultern',ex:['beinpresse','rdl','beinbeuger','schulter','seitheben','plankb'],cardio:'15 min locker auf dem Velo, lockert die Beine'},
+  EBT:{name:'Brust & Trizeps',ex:['brustpresse','butterfly','bankliege','trizeps','ueberkopf','crunchmasch'],cardio:'20 min zügig gehen auf dem Laufband mit Steigung (5–8 %), Puls ca. 120–140'},
+  ERB:{name:'Rücken & Bizeps',ex:['latzug','rudern','hyper','kabelcurl','hammer','beinhebenl'],cardio:'20 min Crosstrainer, gleichmässig, du kannst noch reden'},
+  EBS:{name:'Beine & Schultern',ex:['beinpresse','hipthrust','beinbeuger','abduktor','schultermasch','seitheben','plankb'],cardio:'15 min locker auf dem Velo'},
 };
-const planKeys=()=>S.profile.level==='einsteiger'?['EA','EB']:['A','B'];
+const planKeys=()=>S.profile.level==='einsteiger'?['EBT','ERB','EBS']:['BT','RB','BS'];
 const LEVELS={einsteiger:'Neueinsteiger (noch nie oder kaum trainiert)',wieder:'Wiedereinsteiger (früher schon trainiert)'};
 // Lebensmittel pro 100 g: kcal, Protein, Kohlenhydrate, Fett, Standardportion (g), Einheit
 const FOODS=[
@@ -260,7 +278,7 @@ function phase(dateStr){
   return {wk,sets:3,lo:8,hi:10,label:'Kraft',note:'Woche '+wk+': schwerer, 8–10 Wdh. Bei 10 Wdh. in allen Sätzen erhöhen.'};
 }
 const doneWorkouts=()=>S.workouts.filter(w=>w.done).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.t||0)-(b.t||0));
-function nextDay(){const k=planKeys(),d=doneWorkouts().filter(w=>k.includes(w.day));if(!d.length)return k[0];return d[d.length-1].day===k[0]?k[1]:k[0]}
+function nextDay(){const k=planKeys(),d=doneWorkouts().filter(w=>k.includes(w.day));if(!d.length)return k[0];return k[(k.indexOf(d[d.length-1].day)+1)%k.length]}
 function lastFor(exId){const d=doneWorkouts();for(let i=d.length-1;i>=0;i--){const e=d[i].exercises.find(x=>x.id===exId&&x.sets.some(s=>s.done));if(e)return {date:d[i].date,sets:e.sets.filter(s=>s.done)}}return null}
 function suggest(exId,ph){
   const ex=EXERCISES[exId],last=lastFor(exId);
@@ -348,7 +366,7 @@ VIEWS.heute=()=>{
   const todayIdx=(new Date().getDay()+6)%7,isDay=p.trainDays.includes(todayIdx);
   let train;
   if(S.active)train=`<div class="card"><div class="row between"><h3>Training läuft</h3><span class="chip">${PLANS[S.active.day].name}</span></div><button class="primary" data-act="tab" data-tab="training">Weiter trainieren</button></div>`;
-  else if(until>0)train=`<div class="card"><span class="eyebrow">Gym-Start</span><div class="row between"><div><div class="big num">${until} ${until===1?'Tag':'Tage'}</div><div class="muted small">bis zum ersten Training am ${fmtDate(p.startDate)}</div></div><span class="chip">${ph.label}</span></div><p class="small" style="margin:0">Dein Plan steht: abwechselnd <b>${PLANS[planKeys()[0]].name}</b> und <b>${PLANS[planKeys()[1]].name}</b>, ${p.trainDays.length}× pro Woche (${p.trainDays.map(i=>WD[i]).join(', ')}). Die ersten ${p.level==='einsteiger'?'drei':'zwei'} Wochen sind bewusst leicht.</p><button data-act="tab" data-tab="training">Plan ansehen</button></div>`;
+  else if(until>0)train=`<div class="card"><span class="eyebrow">Gym-Start</span><div class="row between"><div><div class="big num">${until} ${until===1?'Tag':'Tage'}</div><div class="muted small">bis zum ersten Training am ${fmtDate(p.startDate)}</div></div><span class="chip">${ph.label}</span></div><p class="small" style="margin:0">Dein Plan steht: <b>${planKeys().map(k=>PLANS[k].name).join('</b>, <b>')}</b> im Wechsel, jedes Mal mit Bauch und Ausdauer, ${p.trainDays.length}× pro Woche (${p.trainDays.map(i=>WD[i]).join(', ')}). Die ersten ${p.level==='einsteiger'?'drei':'zwei'} Wochen sind bewusst leicht.</p><button data-act="tab" data-tab="training">Plan ansehen</button></div>`;
   else train=`<div class="card"><div class="row between"><div><span class="eyebrow">${isDay?'Heute ist Trainingstag':'Nächstes Training'}</span><h2>${plan.name}</h2></div><span class="chip ${thisWeek>=p.trainDays.length?'ok':''}">${thisWeek} / ${p.trainDays.length} diese Woche</span></div><div class="small muted">${plan.ex.map(e=>EXERCISES[e].n).join(' · ')}</div><button class="primary" data-act="start" data-day="${nd}">${plan.name} starten</button></div>`;
   const lw=S.body.find(b=>b.date===d);
   return train+goalCard()+`
@@ -366,8 +384,8 @@ VIEWS.training=()=>{
   const nd=nextDay();
   const hist=doneWorkouts().slice(-8).reverse();
   const planCard=k=>{const pl=PLANS[k];return `<div class="card"><div class="row between"><h3>${pl.name}</h3>${k===nd?'<span class="chip">als Nächstes</span>':''}</div><div class="list">${pl.ex.map(e=>{const s=suggest(e,ph);const ex=EXERCISES[e];return `<div class="li"><span class="name">${esc(ex.n)}</span><span class="small muted num" style="text-align:right">${ph.sets}×${ex.time?'Zeit':ph.lo+'–'+ph.hi}${s.w!==''&&!ex.time?' · '+fmt(s.w)+' kg':''}</span></div>`}).join('')}<div class="li"><span class="name small">Ausdauer: ${esc(pl.cardio)}</span></div></div><button class="${k===nd?'primary':''}" data-act="start" data-day="${k}">${pl.name} starten</button></div>`};
-  return `<div class="card"><span class="eyebrow">Dein Plan · Phase „${ph.label}“</span><p style="margin:0">${ph.note}</p><p class="small muted" style="margin:0">${planKeys().map(k=>PLANS[k].name).join(' und ')} im Wechsel, ${p.trainDays.length}× pro Woche. Jede Einheit dauert etwa 60 Minuten inkl. 5 Minuten Aufwärmen und Ausdauer am Schluss. Pause zwischen den Sätzen: ${p.restSec} s.</p></div>
-  ${planCard(nd)}${planCard(planKeys().find(k=>k!==nd))}
+  return `<div class="card"><span class="eyebrow">Dein Plan · Phase „${ph.label}“</span><p style="margin:0">${ph.note}</p><p class="small muted" style="margin:0">Split über 3 Tage: ${planKeys().map(k=>PLANS[k].name).join(', ')}. Nach drei Trainings ist jede Muskelgruppe einmal dran, Bauch und Ausdauer sind in jedem Training. Trainierst du mal nur 2×, geht es nächste Woche einfach mit dem nächsten Tag weiter. Jede Einheit dauert etwa 60–70 Minuten inkl. Aufwärmen. Pause zwischen den Sätzen: ${p.restSec} s.</p></div>
+  ${(()=>{const k=planKeys(),i=k.indexOf(nd);return k.slice(i).concat(k.slice(0,i)).map(planCard).join('')})()}
   <div class="card"><h3>Letzte Trainings</h3>${hist.length?`<div class="list">${hist.map(w=>{const vol=w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).reduce((b,s)=>b+(+s.w||0)*(+s.r||0),0),0);return `<div class="li"><span class="name">${fmtDate(w.date)} · ${PLANS[w.day].name}</span><span class="small muted num">${Math.round(vol).toLocaleString('de-CH')} kg Volumen</span></div>`}).join('')}</div>`:`<div class="empty">Noch kein Training gespeichert. Ab dem ${fmtDate(p.startDate)} geht’s los.</div>`}</div>`;
 };
 function activeWorkoutView(){
