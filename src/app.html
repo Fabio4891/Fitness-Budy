@@ -162,29 +162,29 @@ const embedded=(()=>{try{return window.self!==window.top}catch(e){return true}})
 
 // ---------- Data ----------
 const EXERCISES={
-  beinpresse:{n:'Beinpresse',inc:5,lower:true},
-  bank:{n:'Bankdrücken (Langhantel)',inc:2.5},
-  rudern:{n:'Rudern am Kabel, sitzend',inc:2.5},
-  schulter:{n:'Schulterdrücken (Kurzhanteln)',inc:2,per:'pro Hand'},
+  beinpresse:{main:true,n:'Beinpresse',inc:5,lower:true},
+  bank:{main:true,n:'Bankdrücken (Langhantel)',inc:2.5},
+  rudern:{main:true,n:'Rudern am Kabel, sitzend',inc:2.5},
+  schulter:{main:true,n:'Schulterdrücken (Kurzhanteln)',inc:2,per:'pro Hand'},
   beinbeuger:{n:'Beinbeuger (Maschine)',inc:2.5,lower:true},
   plank:{n:'Unterarmstütz (Plank)',inc:0,time:true},
-  rdl:{n:'Rumänisches Kreuzheben',inc:2.5,lower:true},
-  latzug:{n:'Latzug zur Brust',inc:2.5},
-  schraeg:{n:'Schrägbankdrücken (Kurzhanteln)',inc:2,per:'pro Hand'},
-  ausfall:{n:'Ausfallschritte (Kurzhanteln)',inc:2,lower:true,per:'pro Hand'},
+  rdl:{main:true,n:'Rumänisches Kreuzheben',inc:2.5,lower:true},
+  latzug:{main:true,n:'Latzug zur Brust',inc:2.5},
+  schraeg:{main:true,n:'Schrägbankdrücken (Kurzhanteln)',inc:2,per:'pro Hand'},
+  ausfall:{main:true,n:'Ausfallschritte (Kurzhanteln)',inc:2,lower:true,per:'pro Hand'},
   curl:{n:'Bizeps-Curls (Kurzhanteln)',inc:1,per:'pro Hand'},
   trizeps:{n:'Trizepsdrücken am Kabel',inc:2.5},
-  brustpresse:{n:'Brustpresse (Maschine)',inc:2.5},
-  hipthrust:{n:'Hip Thrust (Maschine oder Langhantel)',inc:5,lower:true},
-  goblet:{n:'Goblet Squat (Kurzhantel)',inc:2,lower:true},
-  schultermasch:{n:'Schulterdrücken (Maschine)',inc:2.5},
+  brustpresse:{main:true,n:'Brustpresse (Maschine)',inc:2.5},
+  hipthrust:{main:true,n:'Hip Thrust (Maschine oder Langhantel)',inc:5,lower:true},
+  goblet:{main:true,n:'Goblet Squat (Kurzhantel)',inc:2,lower:true},
+  schultermasch:{main:true,n:'Schulterdrücken (Maschine)',inc:2.5},
   hyper:{n:'Rückenstrecker (Hyperextension)',inc:0,bw:true},
   abduktor:{n:'Abduktoren-Maschine',inc:2.5,lower:true},
   seitstuetz:{n:'Seitstütz (je Seite)',inc:0,time:true},
   butterfly:{n:'Butterfly (Maschine)',inc:2.5},
   ueberkopf:{n:'Trizeps über Kopf (Kabel)',inc:2.5},
   kabelcrunch:{n:'Bauch: Crunches am Kabel',inc:2.5},
-  khrudern:{n:'Kurzhantelrudern einarmig',inc:2,per:'pro Hand'},
+  khrudern:{main:true,n:'Kurzhantelrudern einarmig',inc:2,per:'pro Hand'},
   hammer:{n:'Hammer-Curls (Kurzhanteln)',inc:1,per:'pro Hand'},
   beinheben:{n:'Bauch: Knieheben hängend',inc:0,bw:true},
   seitheben:{n:'Seitheben (Kurzhanteln)',inc:1,per:'pro Hand'},
@@ -267,21 +267,22 @@ const GOALS={aufbau:'Muskelaufbau (leichter Überschuss)',recomp:'Mix: Muskeln a
 
 // ---------- Training logic ----------
 function phase(dateStr){
-  const wk=Math.floor(Math.max(0,daysBetween(S.profile.startDate,dateStr))/7)+1;
-  if(S.profile.level==='einsteiger'){
-    if(wk<=3)return {wk,sets:2,lo:12,hi:15,label:'Kennenlernen',note:'Woche '+wk+': Geräte und Bewegungen lernen. Leichte Gewichte, langsam und kontrolliert. Lass dir die Geräte beim ersten Mal von einem Trainer einstellen.'};
-    if(wk<=10)return {wk,sets:3,lo:10,hi:15,label:'Aufbau',note:'Woche '+wk+': 3 Sätze. Schaffst du überall 15 Wdh., gibt es beim nächsten Mal etwas mehr Gewicht.'};
-    return {wk,sets:3,lo:8,hi:12,label:'Kraft',note:'Woche '+wk+': etwas schwerer, 8–12 Wdh. Bei 12 Wdh. in allen Sätzen erhöhen.'};
+  const wk=Math.floor(Math.max(0,daysBetween(S.profile.startDate,dateStr))/7)+1,beg=S.profile.level==='einsteiger';
+  const iso={iLo:12,iHi:15};
+  if(beg){
+    if(wk<=3)return {wk,sets:2,cLo:12,cHi:15,...iso,label:'Kennenlernen',note:'Woche '+wk+': Geräte und Bewegungen lernen. 2 Sätze à 12–15 Wdh., leichte Gewichte, langsam und kontrolliert. Lass dir die Geräte beim ersten Mal von einem Trainer einstellen.'};
+    if(wk<=10)return {wk,sets:3,cLo:10,cHi:12,...iso,label:'Aufbau',note:'Woche '+wk+': 3 Sätze. Grundübungen 10–12 Wdh., kleine Übungen und Bauch 12–15. Schaffst du überall die obere Zahl, gibt es beim nächsten Mal mehr Gewicht.'};
+    return {wk,sets:3,cLo:8,cHi:10,...iso,label:'Kraft',note:'Woche '+wk+': Grundübungen schwerer mit 8–10 Wdh., kleine Übungen und Bauch 12–15.'};
   }
-  if(wk<=2)return {wk,sets:2,lo:12,hi:15,label:'Wiedereinstieg',note:'Woche '+wk+': leichte Gewichte, Technik sauber, 2–3 Wiederholungen „im Tank“ lassen.'};
-  if(wk<=8)return {wk,sets:3,lo:10,hi:12,label:'Aufbau',note:'Woche '+wk+': 3 Sätze. Schaffst du überall 12 Wdh., gibt es beim nächsten Mal mehr Gewicht.'};
-  return {wk,sets:3,lo:8,hi:10,label:'Kraft',note:'Woche '+wk+': schwerer, 8–10 Wdh. Bei 10 Wdh. in allen Sätzen erhöhen.'};
+  if(wk<=2)return {wk,sets:2,cLo:12,cHi:15,...iso,label:'Wiedereinstieg',note:'Woche '+wk+': 2 Sätze à 12–15 Wdh., leichte Gewichte, Technik sauber, 2–3 Wiederholungen „im Tank“ lassen.'};
+  return {wk,sets:3,cLo:8,cHi:10,...iso,label:'Aufbau',note:'Woche '+wk+': 3 Sätze. Grundübungen 8–10 Wdh., kleine Übungen und Bauch 12–15. Schaffst du überall die obere Zahl, gibt es beim nächsten Mal mehr Gewicht.'};
 }
+function exPh(id,ph){const m=EXERCISES[id].main;return Object.assign({},ph,m?{lo:ph.cLo,hi:ph.cHi}:{lo:ph.iLo,hi:ph.iHi})}
 const doneWorkouts=()=>S.workouts.filter(w=>w.done).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.t||0)-(b.t||0));
 function nextDay(){const k=planKeys(),d=doneWorkouts().filter(w=>k.includes(w.day));if(!d.length)return k[0];return k[(k.indexOf(d[d.length-1].day)+1)%k.length]}
 function lastFor(exId){const d=doneWorkouts();for(let i=d.length-1;i>=0;i--){const e=d[i].exercises.find(x=>x.id===exId&&x.sets.some(s=>s.done));if(e)return {date:d[i].date,sets:e.sets.filter(s=>s.done)}}return null}
 function suggest(exId,ph){
-  const ex=EXERCISES[exId],last=lastFor(exId);
+  ph=exPh(exId,ph);const ex=EXERCISES[exId],last=lastFor(exId);
   if(!last)return {w:'',r:ex.time?20:ph.hi,text:ex.time?'Starte mit 20–30 Sekunden.':ex.bw?'Ohne Zusatzgewicht, langsam hoch und runter.':'Erstes Mal: wähle ein Gewicht, mit dem '+ph.hi+' Wdh. locker gehen.'};
   const sets=last.sets,topW=Math.max(...sets.map(s=>+s.w||0));
   const allTop=sets.length>=ph.sets&&sets.every(s=>(+s.r||0)>=ph.hi);
@@ -383,7 +384,7 @@ VIEWS.training=()=>{
   if(S.active)return activeWorkoutView();
   const nd=nextDay();
   const hist=doneWorkouts().slice(-8).reverse();
-  const planCard=k=>{const pl=PLANS[k];return `<div class="card"><div class="row between"><h3>${pl.name}</h3>${k===nd?'<span class="chip">als Nächstes</span>':''}</div><div class="list">${pl.ex.map(e=>{const s=suggest(e,ph);const ex=EXERCISES[e];return `<div class="li"><span class="name">${esc(ex.n)}</span><span class="small muted num" style="text-align:right">${ph.sets}×${ex.time?'Zeit':ph.lo+'–'+ph.hi}${s.w!==''&&!ex.time?' · '+fmt(s.w)+' kg':''}</span></div>`}).join('')}<div class="li"><span class="name small">Ausdauer: ${esc(pl.cardio)}</span></div></div><button class="${k===nd?'primary':''}" data-act="start" data-day="${k}">${pl.name} starten</button></div>`};
+  const planCard=k=>{const pl=PLANS[k];return `<div class="card"><div class="row between"><h3>${pl.name}</h3>${k===nd?'<span class="chip">als Nächstes</span>':''}</div><div class="list">${pl.ex.map(e=>{const s=suggest(e,ph);const ex=EXERCISES[e];return `<div class="li"><span class="name">${esc(ex.n)}</span><span class="small muted num" style="text-align:right">${ph.sets}×${ex.time?'Zeit':exPh(e,ph).lo+'–'+exPh(e,ph).hi}${s.w!==''&&!ex.time?' · '+fmt(s.w)+' kg':''}</span></div>`}).join('')}<div class="li"><span class="name small">Ausdauer: ${esc(pl.cardio)}</span></div></div><button class="${k===nd?'primary':''}" data-act="start" data-day="${k}">${pl.name} starten</button></div>`};
   return `<div class="card"><span class="eyebrow">Dein Plan · Phase „${ph.label}“</span><p style="margin:0">${ph.note}</p><p class="small muted" style="margin:0">Split über 3 Tage: ${planKeys().map(k=>PLANS[k].name).join(', ')}. Nach drei Trainings ist jede Muskelgruppe einmal dran, Bauch und Ausdauer sind in jedem Training. Trainierst du mal nur 2×, geht es nächste Woche einfach mit dem nächsten Tag weiter. Jede Einheit dauert etwa 60–70 Minuten inkl. Aufwärmen. Pause zwischen den Sätzen: ${p.restSec} s.</p></div>
   ${(()=>{const k=planKeys(),i=k.indexOf(nd);return k.slice(i).concat(k.slice(0,i)).map(planCard).join('')})()}
   <div class="card"><h3>Letzte Trainings</h3>${hist.length?`<div class="list">${hist.map(w=>{const vol=w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).reduce((b,s)=>b+(+s.w||0)*(+s.r||0),0),0);return `<div class="li"><span class="name">${fmtDate(w.date)} · ${PLANS[w.day].name}</span><span class="small muted num">${Math.round(vol).toLocaleString('de-CH')} kg Volumen</span></div>`}).join('')}</div>`:`<div class="empty">Noch kein Training gespeichert. Ab dem ${fmtDate(p.startDate)} geht’s los.</div>`}</div>`;
