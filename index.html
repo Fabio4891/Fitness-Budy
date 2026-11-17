@@ -103,7 +103,7 @@ nav.tabs button[aria-current="page"]{color:var(--accent)}
 .sheet{background:var(--card);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .results{display:flex;flex-direction:column;max-height:40vh;overflow:auto;border:1px solid var(--line);border-radius:10px}
 .results button{border:0;border-bottom:1px solid var(--line);border-radius:0;text-align:left;display:flex;justify-content:space-between;gap:8px;font-weight:500;min-height:44px}
-.info{min-width:30px;min-height:30px;width:30px;height:30px;padding:0;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font-family:Georgia,serif;font-style:italic;font-weight:700;flex:none}
+button.info{min-width:30px;min-height:30px;width:30px;height:30px;padding:0;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font-family:Georgia,serif;font-style:italic;font-weight:700;flex:none}
 .plate{display:inline-block;width:6px;height:22px;border-radius:2px;margin-right:2px;vertical-align:middle}
 .empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:14px;text-align:center}
 textarea{min-height:110px;font-family:ui-monospace,monospace;font-size:12px}
@@ -209,6 +209,14 @@ const PLANS={
   ERB:{name:'Rücken & Bizeps',ex:['latzug','rudern','hyper','kabelcurl','hammer','beinhebenl'],cardio:'20 min Crosstrainer, gleichmässig, du kannst noch reden'},
   EBS:{name:'Beine & Schultern',ex:['beinpresse','hipthrust','beinbeuger','abduktor','schultermasch','seitheben','plankb'],cardio:'15 min locker auf dem Velo'},
 };
+const WARM_PULSE='5 min locker auf Velo, Crosstrainer oder Rudergerät';
+const WARMUP={
+  push:[WARM_PULSE,'Armkreisen vorwärts und rückwärts (je 10)','Arme vor der Brust öffnen und schliessen (10)','Liegestütze an der Bank (5–10)'],
+  pull:[WARM_PULSE,'Armkreisen vorwärts und rückwärts (je 10)','Schulterblätter zusammenziehen (10)','Katze-Kuh im Vierfüssler (10)','Leichtes Rudern am Kabel (10)'],
+  legs:[WARM_PULSE,'Kniebeugen ohne Gewicht (10)','Ausfallschritte (je Bein 5)','Hüftkreisen und Beinschwingen (je 10)','Armkreisen (je 10)'],
+  full:[WARM_PULSE,'Armkreisen (je 10)','Kniebeugen ohne Gewicht (10)','Hüftkreisen (10)'],
+};
+const warmKey=d=>({BT:'push',EBT:'push',RB:'pull',ERB:'pull',BS:'legs',EBS:'legs'})[d]||'full';
 const planKeys=()=>S.profile.level==='einsteiger'?['EBT','ERB','EBS']:['BT','RB','BS'];
 const LEVELS={einsteiger:'Neueinsteiger (noch nie oder kaum trainiert)',wieder:'Wiedereinsteiger (früher schon trainiert)'};
 const INFO={
@@ -420,7 +428,7 @@ VIEWS.training=()=>{
   if(S.active)return activeWorkoutView();
   const nd=nextDay();
   const hist=doneWorkouts().slice(-8).reverse();
-  const planCard=k=>{const pl=PLANS[k];return `<div class="card"><div class="row between"><h3>${pl.name}</h3>${k===nd?'<span class="chip">als Nächstes</span>':''}</div><div class="list">${pl.ex.map(e=>{const s=suggest(e,ph);const ex=EXERCISES[e];return `<div class="li"><span class="row" style="flex-wrap:nowrap;gap:6px;min-width:0">${infoBtn(e)}<span class="name">${esc(ex.n)}</span></span><span class="small muted num" style="text-align:right;flex:none">${ph.sets}×${ex.time?'Zeit':exPh(e,ph).lo+'–'+exPh(e,ph).hi}${s.w!==''&&!ex.time?' · '+fmt(s.w)+' kg':''}</span></div>`}).join('')}<div class="li"><span class="name small">Ausdauer: ${esc(pl.cardio)}</span></div></div><button class="${k===nd?'primary':''}" data-act="start" data-day="${k}">${pl.name} starten</button></div>`};
+  const planCard=k=>{const pl=PLANS[k];return `<div class="card"><div class="row between"><h3>${pl.name}</h3>${k===nd?'<span class="chip">als Nächstes</span>':''}</div><div class="list">${pl.ex.map(e=>{const s=suggest(e,ph);const ex=EXERCISES[e];return `<div class="li"><span class="row" style="flex-wrap:nowrap;gap:6px;min-width:0">${infoBtn(e)}<span class="name">${esc(ex.n)}</span></span><span class="small muted num" style="text-align:right;flex:none">${ph.sets}×${ex.time?'Zeit':exPh(e,ph).lo+'–'+exPh(e,ph).hi}${s.w!==''&&!ex.time?' · '+fmt(s.w)+' kg':''}</span></div>`}).join('')}<div class="li"><span class="name small">Aufwärmen: ${esc(WARMUP[warmKey(k)].slice(1).map(t=>t.replace(/ \(.*\)/,'')).join(', '))}</span></div><div class="li"><span class="name small">Ausdauer: ${esc(pl.cardio)}</span></div></div><button class="${k===nd?'primary':''}" data-act="start" data-day="${k}">${pl.name} starten</button></div>`};
   return `<div class="card"><span class="eyebrow">Dein Plan · Phase „${ph.label}“</span><p style="margin:0">${ph.note}</p><p class="small muted" style="margin:0">Split über 3 Tage: ${planKeys().map(k=>PLANS[k].name).join(', ')}. Nach drei Trainings ist jede Muskelgruppe einmal dran, Bauch und Ausdauer sind in jedem Training. Trainierst du mal nur 2×, geht es nächste Woche einfach mit dem nächsten Tag weiter. Jede Einheit dauert etwa 60–70 Minuten inkl. Aufwärmen. Pause zwischen den Sätzen: ${p.restSec} s.</p></div>
   ${(()=>{const k=planKeys(),i=k.indexOf(nd);return k.slice(i).concat(k.slice(0,i)).map(planCard).join('')})()}
   <div class="card"><h3>Letzte Trainings</h3>${hist.length?`<div class="list">${hist.map(w=>{const vol=w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).reduce((b,s)=>b+(+s.w||0)*(+s.r||0),0),0);return `<div class="li"><span class="name">${fmtDate(w.date)} · ${PLANS[w.day].name}</span><span class="small muted num">${Math.round(vol).toLocaleString('de-CH')} kg Volumen</span></div>`}).join('')}</div>`:`<div class="empty">Noch kein Training gespeichert. Ab dem ${fmtDate(p.startDate)} geht’s los.</div>`}</div>`;
@@ -428,8 +436,9 @@ VIEWS.training=()=>{
 function activeWorkoutView(){
   const a=S.active,pl=PLANS[a.day],ph=phase(a.date);
   const total=a.exercises.reduce((n,e)=>n+e.sets.length,0),done=a.exercises.reduce((n,e)=>n+e.sets.filter(s=>s.done).length,0);
-  return `<div class="card"><div class="row between"><div><span class="eyebrow">Läuft · ${fmtDate(a.date)}</span><h2>${pl.name}</h2></div><span class="chip num">${done}/${total} Sätze</span></div><div class="bar"><i style="width:${done/total*100}%;background:var(--ok)"></i></div><div class="hint">Aufwärmen: 5 min Velo, dann pro Übung 1 lockerer Satz mit halbem Gewicht.</div></div>
-  <div class="card">${a.exercises.map((e,ei)=>{const ex=EXERCISES[e.id],s=suggest(e.id,ph);return `<div class="ex"><div class="row between" style="flex-wrap:nowrap"><h3>${esc(ex.n)}</h3><span class="row" style="flex-wrap:nowrap;gap:6px">${s.up?'<span class="chip ok">schwerer</span>':''}${infoBtn(e.id)}</span></div><div class="hint">${esc(s.text)}${ex.per?' Gewicht '+ex.per+'.':''}</div>
+  return `<div class="card"><div class="row between"><div><span class="eyebrow">Läuft · ${fmtDate(a.date)}</span><h2>${pl.name}</h2></div><span class="chip num">${done}/${total} Sätze</span></div><div class="bar"><i style="width:${done/total*100}%;background:var(--ok)"></i></div></div>
+  <div class="card"><div class="row between"><h3>Aufwärmen</h3><span class="small muted num">ca. 8–10 min</span></div><div class="list">${WARMUP[warmKey(a.day)].map((t,i)=>`<label class="li" style="flex-direction:row;color:var(--ink);font-size:15px"><span class="name">${esc(t)}</span><input type="checkbox" style="width:24px;min-height:24px;flex:none" data-act="warm" data-i="${i}" ${(a.warm||{})[i]?'checked':''}></label>`).join('')}</div><div class="hint">Danach bei der ersten Übung 1–2 lockere Aufwärmsätze (nicht eintragen). Kein langes Dehnen vor dem Training.</div></div>
+  <div class="card">${a.exercises.map((e,ei)=>{const ex=EXERCISES[e.id],s=suggest(e.id,ph);return `<div class="ex"><div class="row between" style="flex-wrap:nowrap"><h3>${esc(ex.n)}</h3><span class="row" style="flex-wrap:nowrap;gap:6px">${s.up?'<span class="chip ok">schwerer</span>':''}${infoBtn(e.id)}</span></div><div class="hint">${esc(s.text)}${ex.per?' Gewicht '+ex.per+'.':''}</div>${ei===0&&!ex.time&&!ex.bw?`<div class="hint"><b>Aufwärmsätze:</b> ${+s.w>0?fmt(Math.round(s.w*0.5/ (ex.inc||2.5))*(ex.inc||2.5))+' kg × 10, dann '+fmt(Math.round(s.w*0.75/(ex.inc||2.5))*(ex.inc||2.5))+' kg × 5':'ca. 50 % × 10, dann 75 % × 5'}</div>`:''}
     <div class="setrow small muted"><span></span><span style="text-align:center">${ex.time?'—':'kg'}</span><span style="text-align:center">${ex.time?'Sek.':'Wdh.'}</span><span></span></div>
     ${e.sets.map((st,si)=>`<div class="setrow"><span class="n">${si+1}</span><input type="number" inputmode="decimal" step="0.5" id="w-${ei}-${si}" data-act="set-w" data-e="${ei}" data-s="${si}" value="${st.w}" ${ex.time?'disabled':''} aria-label="Gewicht Satz ${si+1}"><input type="number" inputmode="numeric" id="r-${ei}-${si}" data-act="set-r" data-e="${ei}" data-s="${si}" value="${st.r}" aria-label="Wiederholungen Satz ${si+1}"><button class="check ${st.done?'on':''}" data-act="set-done" data-e="${ei}" data-s="${si}" aria-label="Satz ${si+1} erledigt">✓</button></div>`).join('')}
     <div class="row"><button class="ghost small" data-act="set-add" data-e="${ei}">+ Satz</button>${e.sets.length>1?`<button class="ghost small" data-act="set-rm" data-e="${ei}">− Satz</button>`:''}</div></div>`}).join('')}</div>
@@ -623,6 +632,7 @@ document.addEventListener('click',async ev=>{
     case 'set-add':{const e=S.active.exercises[+ds.e];const l=e.sets[e.sets.length-1];e.sets.push({w:l.w,r:l.r,done:false});save();render();break}
     case 'set-rm':{const e=S.active.exercises[+ds.e];e.sets.pop();save();render();break}
     case 'cardio':S.active.cardio=el.checked;save();break;
+    case 'warm':S.active.warm=S.active.warm||{};S.active.warm[ds.i]=el.checked;save();break;
     case 'finish':{const a2=S.active;if(!a2.exercises.some(e=>e.sets.some(s=>s.done))){toast('Hake mindestens einen Satz ab.');break}a2.done=true;S.workouts.push(a2);S.active=null;save();stopTimer();setTab('training');toast('Training gespeichert. Stark!');break}
     case 'discard':if(el.dataset.confirm){S.active=null;save();stopTimer();render();}else{el.dataset.confirm='1';el.textContent='Wirklich verwerfen?';setTimeout(()=>{if(el.isConnected){delete el.dataset.confirm;el.textContent='Verwerfen'}},3000)}break;
     case 'timer-add':timer.end+=30000;tick();break;
